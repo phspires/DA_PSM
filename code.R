@@ -6,12 +6,11 @@
 library(readr)
 library(readxl)
 
- 
-setwd("C:/Users/Asus/Desktop/DESCRIPTIVE I")
+setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
 inner.m <- read_excel("models.xlsx",sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx",sheet = "OUTERMODEL")
 
-bank <- read_csv("C:/Users/Asus/Desktop/DESCRIPTIVE I/bank.csv")
+bank <- read_csv("bank.csv")
 
 bank=bank[,2:length(bank)]
 
@@ -72,7 +71,7 @@ create.w.matrix=function(outermodel){
   
     for(j in 1:get.total.mv(outermodel)){
       rownames(z)[j]=outermodel[j,1]
-      if(j>=k && j<=k-1+get.number.mv(outermodel)[i,2]){
+        if(j>=k && j<=k-1+get.number.mv(outermodel)[i,2]){
         z[j,i]=1
       }
     }
@@ -117,16 +116,19 @@ create.cov.matrix= function(data,innermodel){
     
      }
   }
+z=z+t(z)
 return (z)
   
 }
 #arguments Y standardize,innermodel
-create.z.matrix(data,innermodel){
+create.z.matrix=function(data,innermodel){
   
   c=create.cov.matrix(data,innermodel)
   
   #....pensar nisto
+  Y= as.matrix(data) %*% as.matrix(t(c))
   
+  return(Y)
 
 }
 
@@ -147,6 +149,30 @@ create.z.matrix(data,innermodel){
         print('A ESTRUTURA DO INNER MODEL MUST BE A MATRIX')
       
   }
+  
+update.weigths= function(LV,data,outermodel){
+  k=1
+  w=matrix(NA,nrow(outermodel),ncol(LV))
+  
+for (i in (1:get.total.lv(outermodel))){
+ 
+    index=get.number.mv(outermodel)[i,2]
+  
+    for (j in k:(k+index-1)){
+       
+     #k-1+get.number.mv(outermodel)[i,2]
+     #x=paste("i: ",i," j: ",j,", k: ",k)
+     # print(x)
+      w[j,i] = cov((LV[,i]),(data[,j])) 
+     
+      
+    }
+    k=k+get.number.mv(outermodel)[i,2]
+}
+
+return (w)
+
+}
   
    C<- my.pls(bank,inner.m,outer.m)
 
