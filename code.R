@@ -163,6 +163,7 @@ for (i in (1:get.total.lv(outermodel))){
      #k-1+get.number.mv(outermodel)[i,2]
      #x=paste("i: ",i," j: ",j,", k: ",k)
      # print(x)
+      #teste
       w[j,i] = cov((LV[,i]),(data[,j])) 
      
       
