@@ -7,25 +7,25 @@ library(readxl)
 
 #setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
 setwd("C:/Users/pspires/Documents/DA_PSM")
-inner.m <- read_excel("sempls_models.xlsx", sheet = "INNERMODEL")
-outer.m <- read_excel("sempls_models.xlsx", sheet = "OUTERMODEL")
+innerm <- read_excel("sempls_models.xlsx", sheet = "INNERMODEL")
+outerm <- read_excel("sempls_models.xlsx", sheet = "OUTERMODEL")
 
-inner.m <- as.matrix(inner.m)
-outer.m <- as.matrix(outer.m)
+innerm <- as.matrix(innerm)
+outerm <- as.matrix(outerm)
 
-bank <- read.csv("bank.csv")
+banksem <- read.csv("bank.csv")
 
-bank = bank[, 2:length(bank)]
+banksem = banksem[, 2:length(banksem)]
 
-bank <- input.means(bank)
+banksem <- input.means(banksem)
 
-bank = normalize(bank)
+banksem = normalize(banksem)
 
-bank <- as.data.frame(bank)
+banksem <- as.data.frame(banksem)
 
-res <- plsm(bank,inner.m,outer.m)
+result.pls <- plsm(banksem,innerm,outerm)
 
-res
+result.pls
 
-ecsi <- sempls(model = result.pls, data = bank, wscheme = "factorial", tol=1e-4)
+ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=1e-4)
 

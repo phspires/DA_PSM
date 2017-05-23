@@ -218,9 +218,15 @@ my.pls =  function (data,
     iterations = NULL,
     #convCrit = convCrit,
     #verbose = verbose,
-    tolerance = NULL
+    tolerance = NULL,
     #N = NULL,
     #incomplete = NULL
+    innermodel = inner.m,
+    outermodel = outer.m,
+    outerweights = NULL,
+    Y = NULL,
+    z = NULL,
+    cov = NULL
   )
   
   class(result) <- "my.pls"
@@ -283,8 +289,8 @@ my.pls =  function (data,
         stop.criteria(initialweights, newweights)
       
       if (stop.criteria < tolerance) {
-        print("stop")
-        print(stop.criteria)
+        #print("stop")
+        #print(stop.criteria)
         stop = TRUE
       }
       
@@ -294,7 +300,6 @@ my.pls =  function (data,
     }
     
     result$coefficients <- "atribuir coeficientes"
-    result$coefficients <- "atribuir coeficientes"
     result$path_coefficients <- "atribuir path_coefficients"
     result$outer_loadings <- NULL
     result$cross_loadings <- NULL
@@ -303,6 +308,12 @@ my.pls =  function (data,
     result$outer_weights <- NULL
     result$tolerance <- stop.criteria
     result$iterations <- i
+    result$outerweights <- initialweights ## são sempre atualizados > 1 iteração
+    result$z <- z
+    result$Y <- Y
+    result$cov <- cov
+    
+    print("END")
     return(result)
   }
   else
