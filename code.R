@@ -319,3 +319,4 @@ my.pls =  function (data,
   else
     print('INNER MODEL STRUCTURE MUST BE A MATRIX')
 }
+ou
