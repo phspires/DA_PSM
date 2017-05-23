@@ -78,18 +78,20 @@ create.w.matrix=function(outermodel){
     k=k+get.number.mv(outermodel)[i,2]
     
   }
+  
 return(z)  
+  
 }
 #bank and outermodel
-create.y.matrix=function(data,outermodel){
+create.y.matrix=function(data,outermodel,weights){
   X=data
-  W=create.w.matrix(outermodel)
   Y=matrix(0,nrow(data),get.total.lv(outermodel))
   
-  Y=  as.matrix(X) %*% as.matrix(W)
+  Y= as.matrix(X) %*% as.matrix(weights)
   return (Y)
   
 }
+
 #both bank and Y and Z
 normalize= function (data){
   
@@ -110,7 +112,7 @@ create.cov.matrix= function(data,innermodel){
   
   for (j in 1:nrow(x)){
   
-    for (i in (j:ncol(data))){
+    for (i in (j:ncol(x))){
     
      if(x[j,i]==1) z[j,i]= cov(data[,j],data[,i])
     
@@ -126,47 +128,24 @@ create.z.matrix=function(data,innermodel){
   c=create.cov.matrix(data,innermodel)
   
   #....pensar nisto
-  Y= as.matrix(data) %*% as.matrix(t(c))
+  Y= as.matrix(data) %*% (t(c))
   
   return(Y)
 
 }
 
-  my.pls=  function (data, inner_model,outermodel){
-    
-    if (is.data.frame(inner_model) & (is.data.frame(outermodel) ||ncol(outermodel)!=2) & is.data.frame(data)) {
-      
-      print ("OBJECTS STRUCTURE ARE FINE")
-      
-      data=input.means(data)
-      
-      #Normalize
-      return(normalize_data <- scale(data))
-    }
-    
-    else
-    
-        print('A ESTRUTURA DO INNER MODEL MUST BE A MATRIX')
-      
-  }
-  
 update.weigths= function(LV,data,outermodel){
   k=1
-  w=matrix(NA,nrow(outermodel),ncol(LV))
+  w=matrix(0,nrow(outermodel),ncol(LV))
   
 for (i in (1:get.total.lv(outermodel))){
  
     index=get.number.mv(outermodel)[i,2]
   
     for (j in k:(k+index-1)){
-       
-     #k-1+get.number.mv(outermodel)[i,2]
-     #x=paste("i: ",i," j: ",j,", k: ",k)
-     # print(x)
-      #teste
-      w[j,i] = cov((LV[,i]),(data[,j])) 
-     
       
+      w[j,i] = cov((LV[,i]),(data[,j])) 
+    
     }
     k=k+get.number.mv(outermodel)[i,2]
 }
@@ -175,7 +154,95 @@ return (w)
 
 }
   
-   C<- my.pls(bank,inner.m,outer.m)
+stop.criteria=function (weights1,weights2,tolerancia){
+  
+  z=matrix(NA,nrow(wheights1),ncol(wheights2))
+  sum=0
+  if( is.data.frame(wheights1)!=TRUE || is.data.frame(wheights2)!=TRUE || is.numeric(tolerancia)!=TRUE) {
+    cat("ARGUMENT STRUCTURED ARE INCORRECT")
+  } 
+  else{
+      
+    for(i in (1:ncol(wheights1))){
+      for (j in (1:nrow(wheights1))) {
+        sum=sum + abs(wheights1[j,i]-wheights2[j,i])
+      }
+    
+    }
+  return (sum)
+  }
+  
+  
+}
 
+get.sd=function(Y){
+  c=matrix(0,1,ncol(Y))
+  for ( i in (1:ncol(Y))){
+    c[i]= sd(Y[,i])
+    
+  }
+  return(c)
+  
+}
+
+normalize.weights=function(weights,sd,outermodel){
+  k=1
+  
+  for (i in (1:length(weights))){
+    
+    index=get.number.mv(outermodel)[i,2]
+    
+    for (j in k:(k+index-1)){
+      
+      weights[j,i]=weights[j,i]/sd[i]
+    }
+    k=k+get.number.mv(outermodel)[i,2]
+  }
+  
+  return(weights)
+}
+
+my.pls=  function (data, innermodel,outermodel,schema,tolerance){
+  
+  if (is.data.frame(innermodel) & (is.data.frame(outermodel) ||ncol(outermodel)!=2) & is.data.frame(data)) {
+    
+    print ("OBJECTS STRUCTURE ARE FINE")
+
+        stop=FALSE
+
+        initialweights=create.w.matrix(outermodel)
+        
+        while(stop==FALSE) {
+          #treat missing values
+          data=input.means(data)
+          #normalize X
+          data=normalize(data)
+          #score Y, latent variables
+          Y=create.y.matrix(data,outermodel,initialweights)
+          #normalize Y
+          Y=normalize(Y)
+          cov=create.cov.matrix(Y, innermodel)
+          z=create.z.matrix(Y,innermodel)
+          z=normalize(z)
+          newweights=update.weigths(z,data,outermodel)
+          e= create.y.matrix(data,outermodel,newweights)
+          print(e)
+          print(summary(e))
+          
+          stop=TRUE
+        }
+    
+  
+    
+    #Normalize
+    return(e)
+        
+  }
+  
+  else
+    
+    print('A ESTRUTURA DO INNER MODEL MUST BE A MATRIX')
+  
+}
 
   
