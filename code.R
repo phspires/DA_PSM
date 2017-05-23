@@ -123,12 +123,12 @@ return (z)
   
 }
 #arguments Y standardize,innermodel
-create.z.matrix=function(data,innermodel){
+create.z.matrix=function(LV,innermodel){
   
-  c=create.cov.matrix(data,innermodel)
+  c=create.cov.matrix(LV,innermodel)
   
   #....pensar nisto
-  Y= as.matrix(data) %*% (t(c))
+  Y= as.matrix(LV) %*% (t(c))
   
   return(Y)
 
@@ -154,24 +154,17 @@ return (w)
 
 }
   
-stop.criteria=function (weights1,weights2,tolerancia){
+stop.criteria=function (weights1,weights2){
   
-  z=matrix(NA,nrow(wheights1),ncol(wheights2))
+  z=matrix(NA,nrow(weights1),ncol(weights2))
   sum=0
-  if( is.data.frame(wheights1)!=TRUE || is.data.frame(wheights2)!=TRUE || is.numeric(tolerancia)!=TRUE) {
-    cat("ARGUMENT STRUCTURED ARE INCORRECT")
-  } 
-  else{
-      
-    for(i in (1:ncol(wheights1))){
-      for (j in (1:nrow(wheights1))) {
-        sum=sum + abs(wheights1[j,i]-wheights2[j,i])
+
+    for(i in (1:ncol(weights1))){
+      for (j in (1:nrow(weights1))) {
+        sum=sum + abs(weights1[j,i]-weights2[j,i])
       }
-    
     }
   return (sum)
-  }
-  
   
 }
 
@@ -188,7 +181,7 @@ get.sd=function(Y){
 normalize.weights=function(weights,sd,outermodel){
   k=1
   
-  for (i in (1:length(weights))){
+  for (i in (1:ncol(weights))){
     
     index=get.number.mv(outermodel)[i,2]
     
@@ -209,15 +202,15 @@ my.pls=  function (data, innermodel,outermodel,schema,tolerance){
     print ("OBJECTS STRUCTURE ARE FINE")
 
         stop=FALSE
-
+        i=1
         initialweights=create.w.matrix(outermodel)
-        
+        #treat missing values
+        data=input.means(data)
+        #normalize X
+        data=normalize(data)
+        #score Y, latent variables
         while(stop==FALSE) {
-          #treat missing values
-          data=input.means(data)
-          #normalize X
-          data=normalize(data)
-          #score Y, latent variables
+         
           Y=create.y.matrix(data,outermodel,initialweights)
           #normalize Y
           Y=normalize(Y)
@@ -226,23 +219,29 @@ my.pls=  function (data, innermodel,outermodel,schema,tolerance){
           z=normalize(z)
           newweights=update.weigths(z,data,outermodel)
           e= create.y.matrix(data,outermodel,newweights)
-          print(e)
-          print(summary(e))
+          #print(e)
+          #print(summary(e))
           
-          stop=TRUE
-        }
-    
-  
-    
-    #Normalize
-    return(e)
+          norm.weigh=get.sd(e)
+          newweights=normalize.weights(newweights,norm.weigh,outermodel)
+          print(i)
+          
+          if(stop.criteria(initialweights,newweights)<tolerance){
+            print("stop")
+            print(stop.criteria(initialweights,newweights))
+            stop=TRUE
+          }
+          
+          initialweights=newweights
+          
+          i=i+1
+          next
         
+          }
+    return(stop.criteria(initialweights,newweights))
   }
-  
   else
-    
     print('A ESTRUTURA DO INNER MODEL MUST BE A MATRIX')
-  
 }
 
   
