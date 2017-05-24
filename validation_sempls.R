@@ -27,17 +27,5 @@ result.pls <- plsm(banksem,innerm,outerm)
 
 result.pls
 
-<<<<<<< Updated upstream
 ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=0.0001)
-=======
-<<<<<<< Updated upstream
-ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=1e-4)
-=======
-<<<<<<< HEAD
-ecsi <- sempls(model = result.pls, data = banksem, wscheme = "centroid", tol=1e-4)
-=======
-ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=0.0001)
->>>>>>> master
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
