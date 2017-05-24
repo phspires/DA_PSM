@@ -6,7 +6,7 @@
 library(readr)
 library(readxl)
 source("pathcoef.r")
-setwd("C:/Users/bruno/Documents/DA_PSM")
+setwd("C:/Users/pspires/Documents/DA_PSM")
 #setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
@@ -240,11 +240,10 @@ normalize.weights = function(weights, sd, outermodel) {
   return(weights)
 }
 
-
 my.pls =  function (data,
                     innermodel,
                     outermodel,
-                    schema,
+                    wscheme,
                     tolerance) {
   result <- list(
     coefficients = NULL,
@@ -260,7 +259,7 @@ my.pls =  function (data,
     #data = NULL,
     #scaled = scaled,
     #model = model,
-    #weighting_scheme = NULL,
+    weighting_scheme = NULL,
     #weights_evolution = NULL,
     #sum1 = sum1,
     #pairwise = pairwise,
@@ -276,16 +275,17 @@ my.pls =  function (data,
     outerweights = NULL,
     Y = NULL,
     z = NULL,
-    cov = NULL,
     aux=NULL
   )
   
   class(result) <- "my.pls"
   
+  #pb <- winProgressBar("Starting PLS-PM...", "Please wait %",0, 100, 0)
+  
   if (is.data.frame(innermodel) &
       (is.data.frame(outermodel) ||
        ncol(outermodel) != 2) & is.data.frame(data)) {
-    print ("OBJECTS STRUCTURE ARE FINE")
+    message ("OBJECTS STRUCTURE IS FINE")
     
     stop = FALSE
     i = 0
@@ -298,20 +298,25 @@ my.pls =  function (data,
     
     
     #step 1 -- initialize weights(w) to 1
-    initialweights = create.w.matrix(outermodel)
+    outer.w = create.w.matrix(outermodel)
+    
+    ### progression bar
+
     
     while (stop == FALSE) {
       i = i + 1
+      u <- 0
+      
       #step 2
       ##outer estimation of latente variables scores (Y)
-      Y = create.y.matrix(data, outermodel, initialweights)
+      Y = create.y.matrix(data, outermodel, outer.w)
       
       #normalize Y
       Y = normalize(Y)
       
       #step 3
       ## inner weights estimation (e)
-      cov = create.cov.matrix(Y, innermodel)
+      inner.w = create.cov.matrix(Y, innermodel)
       
       #step 4
       ## inner estimation of latent variables scores (Z)
@@ -322,10 +327,10 @@ my.pls =  function (data,
       ##outer weights update (w)
       ## get new weights
       
-      newweights = update.weigths(z, data, outermodel)
+      new.outer.weights = update.weigths(z, data, outermodel)
       
       ## auxiliar matrix needed for weight normalization
-      m.aux = create.y.matrix(data, outermodel, newweights)
+      m.aux = create.y.matrix(data, outermodel, new.outer.weights)
       
       #print(m.aux)
       #print(summary(m.aux))
@@ -333,47 +338,59 @@ my.pls =  function (data,
       norm.weigh = get.sd(m.aux)
       ## for generalization add mean subtraction
       
-      newweights = normalize.weights(newweights, norm.weigh, outermodel)
-      
-      #stage 4
-      #Cross loadings
-      lambda<-cor(data,scale(m.aux))
+      new.outer.weights = normalize.weights(new.outer.weights, norm.weigh, outermodel)
       
       stop.criteria <-
-        stop.criteria(initialweights, newweights)
+        stop.criteria(outer.w, new.outer.weights)
+    
+      message("e: ",stop.criteria)
+      
+      u <- round(100*tolerance/stop.criteria,2)
       
       if (stop.criteria < tolerance) {
-        #print("stop")
-        #print(stop.criteria)
         stop = TRUE
+        u=100
       }
       
-      initialweights = newweights
-
+      outer.w = new.outer.weights
+      message("#",i)
+      #info <- sprintf("%d%% completion - iteration %d", round(u),i)
+      #setWinProgressBar(pb, u, sprintf("OurPLS (%s)", info), info) 
       next
     }
     
-    result$coefficients <- "atribuir coeficientes"
-    result$path_coefficients <- path.coef(scale(m.aux),innermodel)
-    result$outer_loadings <- NULL
-    result$cross_loadings <- lambda
+    #stage 2
+    p.Coef <- path.coef(scale(m.aux),innermodel) 
+    
+    #staget 3
+    ## o.load <- outer_loadings()
+    
+    #stage 4
+    #Cross loadings
+    c.load<-cor(data,scale(m.aux))
+    
+    #result$coefficients <- "atribuir coeficientes"
+    result$path_coefficients <- p.Coef
+    result$outer_loadings <- NULL #<- o.load
+    result$cross_loadings <- c.load
     result$total_effects <- NULL
-    result$inner_weights <- NULL
-    result$outer_weights <- NULL
+    result$inner_weights <- inner.w
+    #result$outer_weights <- NULL
     result$tolerance <- stop.criteria
     result$iterations <- i
-    result$outerweights <- initialweights ## são sempre atualizados > 1 iteração
+    result$outerweights <- outer.w ## always updated 
     result$z <- z
     result$Y <- Y
-    result$cov <- cov
     result$aux <-scale(m.aux)
     
-    print("END")
+    message("End!")
+    #close(pb)
     return(result)
   }
   else
-    print('INNER MODEL STRUCTURE MUST BE A MATRIX')
+    warning('INNER MODEL STRUCTURE MUST BE A MATRIX')
 }
 
 
   
+
