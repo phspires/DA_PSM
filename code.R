@@ -6,12 +6,12 @@
 library(readr)
 library(readxl)
 
-#setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
-setwd("C:/Users/pspires/Documents/DA_PSM")
+setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
+#setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
 
-bank <- read.csv("bank.csv")
+bank <- read_csv("bank.csv")
 
 bank = bank[, 2:length(bank)]
 
@@ -99,7 +99,7 @@ create.y.matrix = function(data, outermodel, weights) {
 
 #both bank and Y and Z
 normalize = function (data) {
-  return(scale(data) * (nrow(data) - 1) / nrow(data))
+  return(scale(data))
   
 }
 
@@ -117,6 +117,28 @@ create.cov.matrix = function(data, innermodel) {
     for (i in (j:ncol(x))) {
       if (x[j, i] == 1)
         z[j, i] = cov(data[, j], data[, i])
+    }
+  }
+  z = z + t(z)
+  return (z)
+  
+}
+
+#arguments Y standardize,innermodel
+# Create the e matrix, covariance matrix, and if the cov<0 = -1 , cov>0=1
+centroid.scheme = function(Y, innermodel) {
+  x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
+  
+  for (i in (1:nrow(x))) {
+    rownames(x)[i] = innermodel[i, 1]
+  }
+  
+  z = as.matrix(x)
+  
+  for (j in 1:nrow(x)) {
+    for (i in (j:ncol(x))) {
+      if (x[j, i] == 1)
+        z[j, i] = sign(cov(Y[, j], Y[, i]))
       
     }
   }
@@ -124,6 +146,33 @@ create.cov.matrix = function(data, innermodel) {
   return (z)
   
 }
+
+Path.scheme=function(Y,innermodel){
+  
+  x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
+
+  x = x+ t(x)*(-1)
+  
+  for (i in (1:nrow(x))) {
+    rownames(x)[i] = innermodel[i, 1]
+  }
+  
+  z = as.matrix(x)
+  
+  for (j in 1:nrow(x)) {
+    for (i in (1:ncol(x))) {
+      if (x[j, i] == 1){
+        z[j, i] = (cov(Y[, j], Y[, i]))
+      }
+      else if (x[j,i]==-1) {}
+    }
+  }
+  z = z + t(z)
+  return (z)
+  
+  
+}
+
 #arguments Y standardize,innermodel
 create.z.matrix = function(LV, innermodel) {
   c = create.cov.matrix(LV, innermodel)
@@ -191,6 +240,7 @@ normalize.weights = function(weights, sd, outermodel) {
   return(weights)
 }
 
+
 my.pls =  function (data,
                     innermodel,
                     outermodel,
@@ -226,7 +276,8 @@ my.pls =  function (data,
     outerweights = NULL,
     Y = NULL,
     z = NULL,
-    cov = NULL
+    cov = NULL,
+    aux=NULL
   )
   
   class(result) <- "my.pls"
@@ -312,6 +363,7 @@ my.pls =  function (data,
     result$z <- z
     result$Y <- Y
     result$cov <- cov
+    result$aux <-m.aux
     
     print("END")
     return(result)
@@ -319,4 +371,6 @@ my.pls =  function (data,
   else
     print('INNER MODEL STRUCTURE MUST BE A MATRIX')
 }
-ou
+
+
+  
