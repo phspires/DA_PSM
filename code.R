@@ -104,7 +104,7 @@ normalize = function (data) {
 }
 
 #arguments Y standardize,innermodel
-create.cov.matrix = function(data, innermodel) {
+create.cov.matrix = function(data, innermodel, wschema) {
   x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
   
   for (i in (1:nrow(x))) {
@@ -115,8 +115,11 @@ create.cov.matrix = function(data, innermodel) {
   
   for (j in 1:nrow(x)) {
     for (i in (j:ncol(x))) {
-      if (x[j, i] == 1)
+      if (x[j, i] == 1 && wschema == "factorial")
         z[j, i] = cov(data[, j], data[, i])
+      else if(x[j, i] == 1 && wschema == "centroid"){
+        z[j, i] = sign(cov(data[, j], data[, i]))
+      } else next
       
     }
   }
@@ -125,8 +128,8 @@ create.cov.matrix = function(data, innermodel) {
   
 }
 #arguments Y standardize,innermodel
-create.z.matrix = function(LV, innermodel) {
-  c = create.cov.matrix(LV, innermodel)
+create.z.matrix = function(LV, innermodel, wschema) {
+  c = create.cov.matrix(LV, innermodel, wschema)
   
   #....pensar nisto
   Y = as.matrix(LV) %*% (t(c))
@@ -195,7 +198,8 @@ my.pls =  function (data,
                     innermodel,
                     outermodel,
                     schema,
-                    tolerance) {
+                    tolerance,
+                    wschema="factorial") {
   result <- list(
     coefficients = NULL,
     path_coefficients = NULL,
@@ -210,7 +214,7 @@ my.pls =  function (data,
     #data = NULL,
     #scaled = scaled,
     #model = model,
-    #weighting_scheme = NULL,
+    weighting_scheme = NULL,
     #weights_evolution = NULL,
     #sum1 = sum1,
     #pairwise = pairwise,
@@ -260,11 +264,20 @@ my.pls =  function (data,
       
       #step 3
       ## inner weights estimation (e)
-      cov = create.cov.matrix(Y, innermodel)
+      weigth.sch <- wschema
+      cov = create.cov.matrix(Y, innermodel, weigth.sch)
+      
+      #if (wschema="factorial") {
+      #  print("Negative number")
+      #} else if (x > 0) {
+      #  print("Positive number")
+      #} else
+      #  print("Zero")
+      
       
       #step 4
       ## inner estimation of latent variables scores (Z)
-      z = create.z.matrix(Y, innermodel)
+      z = create.z.matrix(Y, innermodel, weigth.sch)
       z = normalize(z)
       
       ##step 5
@@ -311,7 +324,8 @@ my.pls =  function (data,
     result$outerweights <- initialweights ## são sempre atualizados > 1 iteração
     result$z <- z
     result$Y <- Y
-    result$cov <- cov
+    result$innerweights <- cov
+    result$factorscores <- scale(m.aux)
     
     print("END")
     return(result)
@@ -319,4 +333,3 @@ my.pls =  function (data,
   else
     print('INNER MODEL STRUCTURE MUST BE A MATRIX')
 }
-ou

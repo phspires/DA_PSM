@@ -27,5 +27,6 @@ result.pls <- plsm(banksem,innerm,outerm)
 
 result.pls
 
-ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=1e-4)
+ecsi <- sempls(model = result.pls, data = banksem, wscheme = "centroid", tol=1e-4)
 
+plsWeights(ecsi)
