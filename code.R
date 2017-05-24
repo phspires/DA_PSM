@@ -5,8 +5,8 @@
 #ARGUMENTS (DATASET, INNER_MODEL,OUTER_MODEL)
 library(readr)
 library(readxl)
-
-setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
+source("pathcoef.r")
+setwd("C:/Users/bruno/Documents/DA_PSM")
 #setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
@@ -351,7 +351,7 @@ my.pls =  function (data,
     }
     
     result$coefficients <- "atribuir coeficientes"
-    result$path_coefficients <- "atribuir path_coefficients"
+    result$path_coefficients <- path.coef(scale(m.aux),innermodel)
     result$outer_loadings <- NULL
     result$cross_loadings <- NULL
     result$total_effects <- NULL
@@ -363,7 +363,7 @@ my.pls =  function (data,
     result$z <- z
     result$Y <- Y
     result$cov <- cov
-    result$aux <-m.aux
+    result$aux <-scale(m.aux)
     
     print("END")
     return(result)
