@@ -1,12 +1,12 @@
-setwd("C:/Users/pspires/Documents/DA_PSM")
+#setwd("C:/Users/pspires/Documents/DA_PSM")
 source("code.R")
 
 library("semPLS")
 library(readr)
 library(readxl)
 
-#setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
-setwd("C:/Users/pspires/Documents/DA_PSM")
+setwd("C:/Users/Asus/Documents/PLS_PATH_17/DA_PSM")
+#setwd("C:/Users/pspires/Documents/DA_PSM")
 innerm <- read_excel("sempls_models.xlsx", sheet = "INNERMODEL")
 outerm <- read_excel("sempls_models.xlsx", sheet = "OUTERMODEL")
 
@@ -27,5 +27,5 @@ result.pls <- plsm(banksem,innerm,outerm)
 
 result.pls
 
-ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=1e-4)
+ecsi <- sempls(model = result.pls, data = banksem, wscheme = "factorial", tol=0.0001)
 
