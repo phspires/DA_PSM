@@ -117,6 +117,16 @@ create.cov.matrix = function(data, innermodel) {
     for (i in (j:ncol(x))) {
       if (x[j, i] == 1)
         z[j, i] = cov(data[, j], data[, i])
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+      else if(x[j, i] == 1 && wschema == "centroid"){
+        z[j, i] = sign(cov(data[, j], data[, i]))
+      } else next
+=======
+>>>>>>> Stashed changes
     }
   }
   z = z + t(z)
@@ -139,6 +149,11 @@ centroid.scheme = function(Y, innermodel) {
     for (i in (j:ncol(x))) {
       if (x[j, i] == 1)
         z[j, i] = sign(cov(Y[, j], Y[, i]))
+<<<<<<< Updated upstream
+=======
+>>>>>>> master
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
       
     }
   }
@@ -362,15 +377,42 @@ my.pls =  function (data,
     result$outerweights <- initialweights ## são sempre atualizados > 1 iteração
     result$z <- z
     result$Y <- Y
+<<<<<<< Updated upstream
+    result$cov <- cov
+=======
+<<<<<<< HEAD
+    result$innerweights <- cov
+    result$factorscores <- scale(m.aux)
+=======
     result$cov <- cov
     result$aux <-m.aux
+<<<<<<< Updated upstream
+=======
+>>>>>>> master
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     
     print("END")
     return(result)
   }
   else
     print('INNER MODEL STRUCTURE MUST BE A MATRIX')
+<<<<<<< Updated upstream
+}
+<<<<<<< Updated upstream
+
+
+  
+=======
+ou
+=======
+<<<<<<< HEAD
+}
+=======
 }
 
 
   
+>>>>>>> master
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
