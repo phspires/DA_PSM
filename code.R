@@ -334,7 +334,10 @@ my.pls =  function (data,
       ## for generalization add mean subtraction
       
       newweights = normalize.weights(newweights, norm.weigh, outermodel)
-      print(i)
+      
+      #stage 4
+      #Cross loadings
+      lambda<-cor(data,scale(m.aux))
       
       stop.criteria <-
         stop.criteria(initialweights, newweights)
@@ -353,7 +356,7 @@ my.pls =  function (data,
     result$coefficients <- "atribuir coeficientes"
     result$path_coefficients <- path.coef(scale(m.aux),innermodel)
     result$outer_loadings <- NULL
-    result$cross_loadings <- NULL
+    result$cross_loadings <- lambda
     result$total_effects <- NULL
     result$inner_weights <- NULL
     result$outer_weights <- NULL
