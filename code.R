@@ -6,7 +6,7 @@
 library(readr)
 library(readxl)
 source("pathcoef.r")
-setwd("C:/Users/pspires/Documents/DA_PSM")
+setwd("C:/Users/Asus/Documents/DA_PSM")
 #setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
@@ -41,7 +41,7 @@ get.number.mv = function (outermodel) {
   controlo = 0
   for (i in 1:get.total.lv(outermodel))
   {
-    x <- unique(outermodel[, 2])[i, 1]
+    x <- unique(outermodel[, 2])[i,1]
     z[i, 1] <- as.matrix(x)
     count = 1
     
@@ -150,8 +150,7 @@ centroid.scheme = function(Y, innermodel) {
 Path.scheme=function(Y,innermodel){
   
   x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
-
-  x = x+ t(x)*(-1)
+  
   
   for (i in (1:nrow(x))) {
     rownames(x)[i] = innermodel[i, 1]
@@ -164,15 +163,12 @@ Path.scheme=function(Y,innermodel){
       if (x[j, i] == 1){
         z[j, i] = (cov(Y[, j], Y[, i]))
       }
-      else if (x[j,i]==-1) {}
     }
   }
-  z = z + t(z)
+  z = z + t(path.coef(Y,innermodel))
   return (z)
-  
-  
-}
 
+}
 #arguments Y standardize,innermodel
 create.z.matrix = function(LV, innermodel) {
   c = create.cov.matrix(LV, innermodel)
@@ -272,7 +268,7 @@ my.pls =  function (data,
     #incomplete = NULL
     innermodel = inner.m,
     outermodel = outer.m,
-    outerweights = NULL,
+    #outerweights = NULL,
     Y = NULL,
     z = NULL,
     aux=NULL
@@ -316,7 +312,13 @@ my.pls =  function (data,
       
       #step 3
       ## inner weights estimation (e)
-      inner.w = create.cov.matrix(Y, innermodel)
+      if(wscheme=="Factor"){
+        inner.w = create.cov.matrix(Y, innermodel)
+      } else if(wscheme=="Centroid"){
+        inner.w = centroid.scheme(Y, innermodel)
+      }else if (wscheme=="Path"){
+        inner.w= Path.scheme(Y,innermodel)
+      }
       
       #step 4
       ## inner estimation of latent variables scores (Z)
@@ -378,7 +380,7 @@ my.pls =  function (data,
     #result$outer_weights <- NULL
     result$tolerance <- stop.criteria
     result$iterations <- i
-    result$outerweights <- outer.w ## always updated 
+    result$outer_weights <- outer.w ## always updated 
     result$z <- z
     result$Y <- Y
     result$aux <-scale(m.aux)
@@ -392,5 +394,55 @@ my.pls =  function (data,
 }
 
 
+
+alpha.metric = function(bank, outermodel) {
+  number.lv = get.total.lv(outermodel)
+  alpha_metrics = c()
+  previous = 0
+  
+  for (i in (1:number.lv)) {
+    k = get.number.mv(outermodel)[i, 2]
+    
+    items = bank[, (previous + 1):(previous + k)]
+    previous = k
+    
+    ## testar isto melhor deposi
+    
+    total = 0
+    c = cor(items)
+    limite = k - 1
+    for (i in 1:(k - 1)) {
+      total = total + i
+    }
+    sum = 0
+    for (i in 1:k) {
+      s = i + 1
+      if (s == k + 1)
+        break
+      for (j in s:k) {
+        sum = sum + c[j, i]
+        
+      }
+      
+    }
+    alpha_metrics = cbind(alpha_metrics, sum / total)
+    
+    
+    
+  }
+  for (i in (1:length(alpha_metrics))) {
+    alpha_metrics[i] = (alpha_metrics[i] * get.number.mv(outer.m)[i, 2]) / (1 +
+                                                                              ((get.number.mv(outer.m)[i, 2]) - 1) * alpha_metrics[i])
+    
+  }
+  
+  alpha_metrics = as.data.frame(alpha_metrics)
+  for (i in 1:length(alpha_metrics)) {
+    colnames(alpha_metrics)[i] = get.number.mv(outermodel)[i, 1]
+    
+  }
+  
+  return(alpha_metrics)
+}
   
 
