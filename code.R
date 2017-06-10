@@ -6,9 +6,9 @@
 library(readr)
 library(readxl)
 source("pathcoef.r")
-source("update.weigthsB.R")
-#setwd("C:/Users/Asus/Documents/DA_PSM")
-setwd("C:/Users/pspires/Documents/DA_PSM")
+#source("update.weigthsB.R")
+setwd("C:/Users/Asus/Documents/DA_PSM_NEW")
+#setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
 
@@ -242,7 +242,7 @@ normalize.weights = function(weights, sd, outermodel) {
 my.pls =  function (data,
                     innermodel,
                     outermodel,
-                    wscheme,
+                    wscheme="Factor",
                     tolerance,
                     mode="A") {
   result <- list(
@@ -274,7 +274,12 @@ my.pls =  function (data,
     outermodel = outer.m,
     Y = NULL,
     z = NULL,
-    aux = NULL
+    r.square=NULL,
+    GoF=NULL,
+    Cronbach.alpha=NULL,
+    Dillon.Goldstein=NULL,
+    Redundancy.indexes=NULL,
+    Communality=NULL
   )
   
   class(result) <- "my.pls"
@@ -376,6 +381,22 @@ my.pls =  function (data,
     #Cross loadings
     c.load <- cor(data, scale(m.aux))
     
+    #r.square
+    r.square<- get.R.square(scale(m.aux),innermodel,outermodel)
+    
+    #GoF
+    
+    Gof<- get.GoF(data,scale(m.aux),innermodel,outermodel)
+    
+    Cronbach.alpha<- alpha.metric(data,outermodel)
+    
+    Dillon.Goldstein <- get.Dillon.rho(c.load,outermodel)
+    
+    Communality <- get.communality(data,scale(m.aux),outermodel)
+    
+    
+    Redundancy.indexes <- get.redundancy.indexes(data,Communality,scale(m.aux),outermodel,innermodel)
+    
     #result$coefficients <- "atribuir coeficientes"
     result$path_coefficients <- p.Coef
     result$outer_loadings <- NULL #<- o.load
@@ -388,11 +409,16 @@ my.pls =  function (data,
     result$outer_weights <- outer.w ## always updated
     result$z <- z
     result$Y <- Y
-    result$aux <- scale(m.aux)
+    result$z <- scale(m.aux)
     result$weighting_scheme <- wscheme
-    result$z <- z
     result$data <- data
     result$outm <- outermodel
+    result$r.square<-r.square
+    result$.Gof<- Gof
+    result$Cronbach.alpha<-Cronbach.alpha
+    result$Dillon.Goldstein<-Dillon.Goldstein
+    result$Redundancy.indexes<-Redundancy.indexes
+    result$Communality<-Communality
     
     message("End!")
     #close(pb)
@@ -453,3 +479,177 @@ alpha.metric = function(bank, outermodel) {
   
   return(alpha_metrics)
 }
+
+
+
+
+get.Dillon.rho = function (crossload,outermodel){
+  
+  w=create.w.matrix(outermodel)
+  pesos=w
+  lamedas=c()
+  rho=c()
+  
+  
+  for ( i in 1:ncol(crossload)){
+    for (j in 1:nrow(crossload)){
+      
+      pesos[j,i]=crossload[j,i]*w[j,i]
+    }
+  }
+  
+  
+  previous=0
+  for (i in 1:ncol(pesos)){
+    k=get.number.mv(outermodel)[i,2]
+    for (j in (previous+1):(previous+k)){
+      
+      lamedas[j-previous]=pesos[j,i]
+      
+    }
+    
+    
+    lamedas.square=sapply(lamedas,function(x) x^2)
+    error=sapply(lamedas.square, function(x) 1-x)
+    sum.lamedas=sum(lamedas)
+    sum.square.lamedas=sum.lamedas*sum.lamedas
+    sum.error=sum(error)
+    
+    previous=previous+k
+    lamedas=NULL
+    rho[i]=(sum.square.lamedas/(sum.square.lamedas+sum.error))
+    
+  }
+  return(rho)
+}
+
+
+get.communality= function (data,Z2,outermodel){
+  
+  res=c()
+  
+  previous=0
+  for (i in (1:ncol(Z2))){
+    k=get.number.mv(outermodel)[i,2]
+    
+    sum=0
+    
+    for (j in (previous+1):(previous+k)){
+      sum=  sum+cor(data[,j],Z2[,i])*cor(data[,j],Z2[,i])
+      if(is.null(sum)) sum=0
+    }
+    res[i]=sum/k
+    res=as.data.frame(res)
+    for (i in 1:length(res)) {
+      colnames(res)[i] = get.number.mv(outermodel)[i, 1]
+      
+    }
+    
+    previous=previous+k
+  }
+  return(res)  
+}
+
+
+
+#####redundancy
+get.redundancy.indexes= function(data,commulative,Z2,outermodel,innermodel){
+  x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
+  commulative=get.communality(data,Z2,outermodel)
+  r.square=c()
+  redundancy.index=c()
+  indexes=c()
+  
+  for (i in 1:ncol(x)){
+    
+    for (j in 1:nrow(x)){
+      
+      if (x[j,i]==1){ indexes=cbind(indexes,j)}
+      
+      
+    }
+    if(length(indexes)>0){
+      
+      regression=lm(Z2[,i]~ Z2[,indexes])
+      r.square[i]=summary(regression)$r.square
+      redundancy.index[i]=as.data.frame(r.square[i]*commulative[i])
+      indexes=NULL
+    }
+    
+  }
+  
+  redundancy=as.data.frame(t(redundancy.index))
+  for (i in 1:length(redundancy)) {
+    colnames(redundancy)[i] = get.number.mv(outermodel)[i, 1]
+    
+  }
+    
+  return(redundancy)
+}
+
+get.R.square = function (Z2,innermodel,outermodel){
+  x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
+  indexes=c()
+  r.square=c()
+  for (i in 1:ncol(x)){
+    
+    for (j in 1:nrow(x)){
+      
+      if (x[j,i]==1){ indexes=cbind(indexes,j)}
+      
+      
+    }
+    if(length(indexes)>0){
+      
+      regression=lm(Z2[,i]~ Z2[,indexes])
+      r.square[i]=summary(regression)$r.square
+      indexes=NULL
+    }
+    
+  }
+  r.square = as.data.frame(t(r.square))
+  for (i in 1:length(r.square)) {
+    colnames(r.square)[i] = get.number.mv(outermodel)[i, 1]
+    
+  }
+  return(r.square)
+}
+
+
+get.GoF=function(data,Z2,innermodel,outermodel){
+  
+  r.square=as.numeric(get.R.square(Z2,innermodel,outermodel))
+  comulative=as.numeric(get.communality(data,Z2,outermodel))
+  
+  mv=c()
+  index=c()
+  
+  for (i in 1:ncol(Z2)){
+    
+    mv[i]= get.number.mv(outermodel)[i,2]  
+    
+  }
+  commulative.sum=0
+  
+  for (i in 1:length(comulative)){
+    commulative.sum=commulative.sum+mv[i]*comulative[i]
+  }
+  
+  average.r.square=mean(r.square,na.rm = TRUE)
+  average.commulative=commulative.sum/sum(mv)
+  GoF=(average.r.square*average.commulative)^0.5
+  
+  r1=c("Avg R.Square","Avg Commulative","GoF")
+  r2=c(average.r.square,average.commulative,GoF)
+  
+  measure=as.data.frame(t(r2))
+    
+  for (i in 1:ncol(measure)){
+    
+      colnames(measure)[i]=r1[i]
+    
+  }
+  
+  return(measure)
+}
+
