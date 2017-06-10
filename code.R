@@ -6,8 +6,9 @@
 library(readr)
 library(readxl)
 source("pathcoef.r")
-setwd("C:/Users/Asus/Documents/DA_PSM")
-#setwd("C:/Users/pspires/Documents/DA_PSM")
+source("update.weigthsB.R")
+#setwd("C:/Users/Asus/Documents/DA_PSM")
+setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
 
@@ -41,7 +42,7 @@ get.number.mv = function (outermodel) {
   controlo = 0
   for (i in 1:get.total.lv(outermodel))
   {
-    x <- unique(outermodel[, 2])[i,1]
+    x <- unique(outermodel[, 2])[i, 1]
     z[i, 1] <- as.matrix(x)
     count = 1
     
@@ -83,7 +84,6 @@ create.w.matrix = function(outermodel) {
     k = k + get.number.mv(outermodel)[i, 2]
     
   }
-  
   return(z)
   
 }
@@ -147,8 +147,7 @@ centroid.scheme = function(Y, innermodel) {
   
 }
 
-Path.scheme=function(Y,innermodel){
-  
+Path.scheme = function(Y, innermodel) {
   x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
   
   
@@ -160,14 +159,14 @@ Path.scheme=function(Y,innermodel){
   
   for (j in 1:nrow(x)) {
     for (i in (1:ncol(x))) {
-      if (x[j, i] == 1){
+      if (x[j, i] == 1) {
         z[j, i] = (cov(Y[, j], Y[, i]))
       }
     }
   }
-  z = z + t(path.coef(Y,innermodel))
+  z = z + t(path.coef(Y, innermodel))
   return (z)
-
+  
 }
 #arguments Y standardize,innermodel
 create.z.matrix = function(LV, innermodel) {
@@ -180,22 +179,27 @@ create.z.matrix = function(LV, innermodel) {
   
 }
 
-update.weigths = function(LV, data, outermodel) {
+update.weigths <- function(LV, data, outermodel, mode) {
   k = 1
   w = matrix(0, nrow(outermodel), ncol(LV))
   
   for (i in (1:get.total.lv(outermodel))) {
     index = get.number.mv(outermodel)[i, 2]
     
-    for (j in k:(k + index - 1)) {
-      w[j, i] = cov((LV[, i]), (data[, j]))
+    if (mode == "A") {
+      #message("mode A")
+      w[k:(k + index - 1), i] = cov((LV[, i]), (data[, k:(k + index - 1)]))
       
+    } else if (mode == "B") {
+      #message("mode B")
+      w[k:(k + index - 1), i] = solve(cor(data[, k:(k + index - 1)])) %*% cor((data[, k:(k + index - 1)]), (LV[, i]))
     }
+    
+    #  for (j in k:(k + index - 1)) {
+    #  }
     k = k + get.number.mv(outermodel)[i, 2]
   }
-  
   return (w)
-  
 }
 
 stop.criteria = function (weights1, weights2) {
@@ -218,7 +222,6 @@ get.sd = function(Y) {
     
   }
   return(c)
-  
 }
 
 normalize.weights = function(weights, sd, outermodel) {
@@ -240,7 +243,8 @@ my.pls =  function (data,
                     innermodel,
                     outermodel,
                     wscheme,
-                    tolerance) {
+                    tolerance,
+                    mode="A") {
   result <- list(
     coefficients = NULL,
     path_coefficients = NULL,
@@ -268,15 +272,17 @@ my.pls =  function (data,
     #incomplete = NULL
     innermodel = inner.m,
     outermodel = outer.m,
-    #outerweights = NULL,
     Y = NULL,
     z = NULL,
-    aux=NULL
+    aux = NULL
   )
   
   class(result) <- "my.pls"
   
   #pb <- winProgressBar("Starting PLS-PM...", "Please wait %",0, 100, 0)
+  
+  modes <- c("A","B")
+  stopifnot(mode %in% modes)
   
   if (is.data.frame(innermodel) &
       (is.data.frame(outermodel) ||
@@ -292,12 +298,11 @@ my.pls =  function (data,
     ## normalize X
     data = normalize(data)
     
-    
     #step 1 -- initialize weights(w) to 1
     outer.w = create.w.matrix(outermodel)
     
     ### progression bar
-
+    
     
     while (stop == FALSE) {
       i = i + 1
@@ -312,12 +317,12 @@ my.pls =  function (data,
       
       #step 3
       ## inner weights estimation (e)
-      if(wscheme=="Factor"){
+      if (wscheme == "Factor") {
         inner.w = create.cov.matrix(Y, innermodel)
-      } else if(wscheme=="Centroid"){
+      } else if (wscheme == "Centroid") {
         inner.w = centroid.scheme(Y, innermodel)
-      }else if (wscheme=="Path"){
-        inner.w= Path.scheme(Y,innermodel)
+      } else if (wscheme == "Path") {
+        inner.w = Path.scheme(Y, innermodel)
       }
       
       #step 4
@@ -328,9 +333,9 @@ my.pls =  function (data,
       ##step 5
       ##outer weights update (w)
       ## get new weights
-      
-      new.outer.weights = update.weigths(z, data, outermodel)
-      
+
+      new.outer.weights = update.weigths(z, data, outermodel, mode)
+        
       ## auxiliar matrix needed for weight normalization
       m.aux = create.y.matrix(data, outermodel, new.outer.weights)
       
@@ -344,32 +349,32 @@ my.pls =  function (data,
       
       stop.criteria <-
         stop.criteria(outer.w, new.outer.weights)
-    
-      message("e: ",stop.criteria)
       
-      u <- round(100*tolerance/stop.criteria,2)
+      message("e: ", stop.criteria)
+      
+      u <- round(100 * tolerance / stop.criteria, 2)
       
       if (stop.criteria < tolerance) {
         stop = TRUE
-        u=100
+        u = 100
       }
       
       outer.w = new.outer.weights
-      message("#",i)
+      message("#", i)
       #info <- sprintf("%d%% completion - iteration %d", round(u),i)
-      #setWinProgressBar(pb, u, sprintf("OurPLS (%s)", info), info) 
+      #setWinProgressBar(pb, u, sprintf("OurPLS (%s)", info), info)
       next
     }
     
     #stage 2
-    p.Coef <- path.coef(scale(m.aux),innermodel) 
+    p.Coef <- path.coef(scale(m.aux), innermodel)
     
     #staget 3
     ## o.load <- outer_loadings()
     
     #stage 4
     #Cross loadings
-    c.load<-cor(data,scale(m.aux))
+    c.load <- cor(data, scale(m.aux))
     
     #result$coefficients <- "atribuir coeficientes"
     result$path_coefficients <- p.Coef
@@ -380,10 +385,14 @@ my.pls =  function (data,
     #result$outer_weights <- NULL
     result$tolerance <- stop.criteria
     result$iterations <- i
-    result$outer_weights <- outer.w ## always updated 
+    result$outer_weights <- outer.w ## always updated
     result$z <- z
     result$Y <- Y
-    result$aux <-scale(m.aux)
+    result$aux <- scale(m.aux)
+    result$weighting_scheme <- wscheme
+    result$z <- z
+    result$data <- data
+    result$outm <- outermodel
     
     message("End!")
     #close(pb)
@@ -444,5 +453,3 @@ alpha.metric = function(bank, outermodel) {
   
   return(alpha_metrics)
 }
-  
-
