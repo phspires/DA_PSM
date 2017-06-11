@@ -48,10 +48,11 @@ advance.analytics.pls =  function (data,
   modes <- c("A","B")
   stopifnot(mode %in% modes)
   
-  if (is.data.frame(innermodel) &
-      (is.data.frame(outermodel) ||
-       ncol(outermodel) != 2) & is.data.frame(data)) {
-    message ("OBJECTS STRUCTURE IS FINE")
+  if ((is.data.frame(innermodel)) & (ncol(innermodel)==2) & (is.data.frame(outermodel)) & 
+      (ncol(outermodel) == 2) &
+      ( is.data.frame(data)))
+  {
+     message ("OBJECTS STRUCTURE ARE FINE")
     
     stop = FALSE
     i = 0
@@ -114,17 +115,17 @@ advance.analytics.pls =  function (data,
       stop.criteria <-
         stop.criteria(outer.w, new.outer.weights)
       
-      message("e: ", stop.criteria)
+      #message("e: ", stop.criteria)
       
       u <- round(100 * tolerance / stop.criteria, 2)
       
-      if (stop.criteria < tolerance) {
+      if (stop.criteria < tolerance ) {
         stop = TRUE
         u = 100
       }
       
       outer.w = new.outer.weights
-      message("#", i)
+      #message("#", i)
       #info <- sprintf("%d%% completion - iteration %d", round(u),i)
       #setWinProgressBar(pb, u, sprintf("OurPLS (%s)", info), info)
       if(i==max_iter){ paste("max_interations reach, algorithm will stop without reach the stop criteria")
@@ -183,10 +184,15 @@ advance.analytics.pls =  function (data,
     result$Redundancy.indexes<-Redundancy.indexes
     result$Communality<-Communality
     
+    
+    message("Weight_Schema: ", wscheme)
+    message("tol: ", tolerance)
+    message("Stop afer ", i )
     message("End!")
     #close(pb)
     return(result)
   }
   else
-    warning('INNER MODEL STRUCTURE MUST BE A MATRIX')
+    warning('INNER MODEL,OUTER MODEL, DATA STRUCTURE MUST BE A DATA.FRAME
+             INNER MODEL AND OUTER MODEL ONLY HAVE 2 VARIABLES')
 }
