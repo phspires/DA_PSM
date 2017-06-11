@@ -37,5 +37,5 @@ bootstrap.tstat <- function(result,model,outerm,n_samples){
   val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
   t<- ((result$mean-val)*sqrt(n_samples))/(result$sd)
   p<- 2*pt((t), df=n_samples-1)
-  return(t)
+  return(results)
 }
