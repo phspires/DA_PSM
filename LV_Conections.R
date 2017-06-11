@@ -5,7 +5,7 @@
 #the only reason why pass the outermodel as parameter is to construct the inner with tthe same order.
 create.conection.matrix=function (innermodel,outermodel){
   
-  if (ncol(innermodel)!=2){ stop("The inner model must be a file with to colums")}
+  if (ncol(innermodel)!=2 || ncol(outermodel) !=2){ stop("The inner model must be a file with to colums")}
   order=c()
   #attach(innermodel)
   
@@ -19,7 +19,7 @@ create.conection.matrix=function (innermodel,outermodel){
   rownames(conection)=order
   
   for (i in 1:ncol(conection)){
-    new_data=innermodel[which(FROM==order[i]),]
+    new_data=innermodel[which(innermodel[1]==order[i]),]
     
     for (j in i:ncol(conection)) {
       d = colnames(conection)[j]

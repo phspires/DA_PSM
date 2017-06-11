@@ -1,10 +1,10 @@
-##inner model - markov matrix (binary)
-##outer model - weights matrix
 
-#FIRST FUNCTION BUILD A MODEL
-#ARGUMENTS (DATASET, INNER_MODEL,OUTER_MODEL)
+## André Bruno Pedro
+## The A-Team 
+
 library(readr)
 library(readxl)
+library(boot)
 source("pathcoef.r")
 source("LV_Conections.R")
 source("weights_schemas.R")
@@ -25,18 +25,31 @@ source("z_matrix.r")
 source("y_matrix.r")
 source("auxiliary_functions.r")
 source("PLS.r")
+source("outer_loading.r")
 #source("update.weigthsB.R")
 setwd("C:/Users/Asus/Documents/DA_PSM_NEW")
 #setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
+profdata <- read_excel("C:/Users/Asus/Desktop/profdata.xlsx")
 
 bank <- read_csv("bank.csv")
 
 bank = bank[, 2:length(bank)]
 
 
-model=advance.analytics.pls(bank,inner.m,outer.m,,0.001)
+
+aapls <- function(bank,i) {
+  
+  model=advance.analytics.pls(bank[i,],inner.m,outer.m,,0.1)
+  return (model$outer_weights)
+}
+
+#boot(bank, aapls, R = 500, stype = "i")
+
+
+
+model=advance.analytics.pls(profdata,inner.m,outer.m,"Factor",0.0000001,"A")
 
 
 
