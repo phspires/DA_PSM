@@ -1,5 +1,5 @@
-path.coef = function (LV, innermodel) {
-  x = innermodel[1:nrow(innermodel), 2:ncol(innermodel)]
+path.coef = function (LV, innermodel,outermodel) {
+  x = create.conection.matrix(innermodel,outermodel)
   Y.prec.index = c()
   y = matrix(0, ncol(LV), ncol(LV))
   f = NULL
