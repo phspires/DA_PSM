@@ -8,29 +8,28 @@ bootstrap.matrix.sample<-function (data){
   return (ind)
 }
 
-bootsrap.statistic<-function (data,n_samples = 10,innerm,outerm){
-  
+bootstrap.statistic<-function (data,n_samples = 50,innerm,outerm){
+
   sample_matrix <- matrix(NA,n_samples,nrow(innerm)+nrow(outerm))
   results <- list(mean = NULL, sd= NULL)
-  class(results) <-"bootstrap.matrix.statistic" 
+  class(results) <-"bootstrap.matrix.statistic"
   # Compute statistics and mean it to get statistic's value
   for (i in 1:n_samples) {
-    model<-advance.analytics.pls(data[bootstrap.matrix.sample(data),],innerm,outerm,tolerance = 1e-7)
+    model<-advance.analytics.pls(data[bootstrap.matrix.sample(data),],innerm,outerm,tolerance = 1e-7, full=FALSE)
     outer_loading<- create.w.matrix(outerm)*model$cross_loadings
     val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
     print(length(val))
     sample_matrix[i,]<-val
   }
-   
+
   mean<- colMeans(sample_matrix)
   #compute standard deviation
   sd<- apply(sample_matrix, 2, sd)
   results$mean<-mean
   results$sd<-sd
-  
+
   #compute tvalue
   return (results)
-  
 }
 #t statistitc
 bootstrap.tstat <- function(result,model,outerm,n_samples){
