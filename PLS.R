@@ -2,7 +2,7 @@ advance.analytics.pls =  function (data,
                       innermodel,
                       outermodel,
                       wscheme="Factor",
-                      tolerance,
+                      tolerance=0.0000001,
                       mode="A",max_iter=100,
                       full=TRUE) {
     result <- list(
@@ -53,7 +53,7 @@ advance.analytics.pls =  function (data,
         (ncol(outermodel) == 2) &
         ( is.data.frame(data)))
     {
-       message ("OBJECTS STRUCTURE ARE FINE")
+       message ("OBJECTS STRUCTURE IS OK")
 
       stop = FALSE
       i = 0
@@ -177,7 +177,6 @@ advance.analytics.pls =  function (data,
       result$cross_loadings <- c.load
       result$total_effects <- total.e
       result$inner_weights <- inner.w
-      #result$outer_weights <- NULL
       result$tolerance <- stop.criteria
       result$iterations <- i
       result$outer_weights <- outer.w ## always updated
