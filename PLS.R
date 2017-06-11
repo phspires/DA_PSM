@@ -3,7 +3,8 @@ advance.analytics.pls =  function (data,
                       outermodel,
                       wscheme="Factor",
                       tolerance,
-                      mode="A",max_iter=100) {
+                      mode="A",max_iter=100,
+                      full=TRUE) {
     result <- list(
       coefficients = NULL,
       path_coefficients = NULL,
@@ -40,46 +41,46 @@ advance.analytics.pls =  function (data,
       Redundancy.indexes=NULL,
       Communality=NULL
     )
-    
+
     class(result) <- "my.pls"
-    
+
     #pb <- winProgressBar("Starting PLS-PM...", "Please wait %",0, 100, 0)
-    
+
     modes <- c("A","B")
     stopifnot(mode %in% modes)
-    
-    if ((is.data.frame(innermodel)) & (ncol(innermodel)==2) & (is.data.frame(outermodel)) & 
+
+    if ((is.data.frame(innermodel)) & (ncol(innermodel)==2) & (is.data.frame(outermodel)) &
         (ncol(outermodel) == 2) &
         ( is.data.frame(data)))
     {
        message ("OBJECTS STRUCTURE ARE FINE")
-      
+
       stop = FALSE
       i = 0
-      
+
       # data preparation
       ##treat missing values
       data = input.means(data)
       ## normalize X
       data = normalize(data)
-      
+
       #step 1 -- initialize weights(w) to 1
       outer.w = create.w.matrix(outermodel)
-      
+
       ### progression bar
-      
-      
+
+
       while (stop == FALSE) {
         i = i + 1
         u <- 0
-        
+
         #step 2
         ##outer estimation of latente variables scores (Y)
         Y = create.y.matrix(data, outermodel, outer.w)
-        
+
         #normalize Y
         Y = normalize(Y)
-        
+
         #step 3
         ## inner weights estimation (e)
         if (wscheme == "Factor") {
@@ -89,41 +90,41 @@ advance.analytics.pls =  function (data,
         } else if (wscheme == "Path") {
           inner.w = Path.scheme(Y, innermodel,outermodel)
         }
-        
+
         #step 4
         ## inner estimation of latent variables scores (Z)
         z = create.z.matrix(Y, innermodel,outermodel)
         z = normalize(z)
-        
+
         ##step 5
         ##outer weights update (w)
         ## get new weights
-        
+
         new.outer.weights = update.weigths(z, data, outermodel, mode)
-        
+
         ## auxiliar matrix needed for weight normalization
         m.aux = create.y.matrix(data, outermodel, new.outer.weights)
-        
+
         #print(m.aux)
         #print(summary(m.aux))
-        
+
         norm.weigh = get.sd(m.aux)
         ## for generalization add mean subtraction
-        
+
         new.outer.weights = normalize.weights(new.outer.weights, norm.weigh, outermodel)
-        
+
         stop.criteria <-
           stop.criteria(outer.w, new.outer.weights)
-        
+
         #message("e: ", stop.criteria)
-        
+
         u <- round(100 * tolerance / stop.criteria, 2)
-        
+
         if (stop.criteria < tolerance ) {
           stop = TRUE
           u = 100
         }
-        
+
         outer.w = new.outer.weights
         #message("#", i)
         #info <- sprintf("%d%% completion - iteration %d", round(u),i)
@@ -133,33 +134,43 @@ advance.analytics.pls =  function (data,
         }
         next
       }
-      
+
       #stage 2
       p.Coef <- path.coef(scale(m.aux), innermodel,outermodel)
-      
+      total.e<- total_effects(p.Coef)
+
       #staget 3
-      ## o.load <- outer_loadings()
-      
+
       #stage 4
       #Cross loadings
       c.load <- cor(data, scale(m.aux))
-      
-      #r.square
-      r.square<- get.R.square(scale(m.aux),innermodel,outermodel)
-      
-      #GoF
-      
-      Gof<- get.GoF(data,scale(m.aux),innermodel,outermodel)
-      
-      Cronbach.alpha<- alpha.metric(data,outermodel)
-      
-      Dillon.Goldstein <- get.Dillon.rho(c.load,outermodel)
-      
-      Communality <- get.communality(data,scale(m.aux),outermodel)
+
       o.load<- outer.loadings(c.load,outermodel)
-      total.e<- total_effects(p.Coef)
-      Redundancy.indexes <- get.redundancy.indexes(data,Communality,scale(m.aux),outermodel,innermodel)
-      
+
+      if(full) {
+
+        #r.square
+        r.square<- get.R.square(scale(m.aux),innermodel,outermodel)
+        #GoF
+        Gof<- get.GoF(data,scale(m.aux),innermodel,outermodel)
+
+        Cronbach.alpha<- alpha.metric(data,outermodel)
+
+        Dillon.Goldstein <- get.Dillon.rho(c.load,outermodel)
+
+        Communality <- get.communality(data,scale(m.aux),outermodel)
+
+        Redundancy.indexes <- get.redundancy.indexes(data,Communality,scale(m.aux),outermodel,innermodel)
+
+        result$r.square<-r.square
+        result$.Gof<- Gof
+        result$Cronbach.alpha<-Cronbach.alpha
+        result$Dillon.Goldstein<-Dillon.Goldstein
+        result$Redundancy.indexes<-Redundancy.indexes
+        result$Communality<-Communality
+
+      }
+
       #result$coefficients <- "atribuir coeficientes"
       result$path_coefficients <- p.Coef
       result$outer_loadings <- o.load #<- o.load
@@ -176,14 +187,7 @@ advance.analytics.pls =  function (data,
       result$weighting_scheme <- wscheme
       result$data <- data
       result$outm <- outermodel
-      result$r.square<-r.square
-      result$.Gof<- Gof
-      result$Cronbach.alpha<-Cronbach.alpha
-      result$Dillon.Goldstein<-Dillon.Goldstein
-      result$Redundancy.indexes<-Redundancy.indexes
-      result$Communality<-Communality
-      
-      
+
       message("Weight_Schema: ", wscheme)
       message("tol: ", tolerance)
       message("Stop afer ", i )
