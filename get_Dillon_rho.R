@@ -6,14 +6,9 @@ get.Dillon.rho = function (crossload,outermodel){
   lamedas=c()
   rho=c()
   
-  
-  for ( i in 1:ncol(crossload)){
-    for (j in 1:nrow(crossload)){
-      
-      pesos[j,i]=crossload[j,i]*w[j,i]
-    }
-  }
-  
+ 
+      pesos=crossload*w
+ 
   
   previous=0
   for (i in 1:ncol(pesos)){

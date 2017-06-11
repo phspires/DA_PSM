@@ -13,7 +13,7 @@ alpha.metric = function(bank, outermodel) {
     items = bank[, (previous + 1):(previous + k)]
     previous = k
     
-    ## testar isto melhor deposi
+
     
     total = 0
     c = cor(items)
