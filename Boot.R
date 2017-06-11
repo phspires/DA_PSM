@@ -1,5 +1,5 @@
-source("code.R")
-source("w_matrix.R")
+#source("code.R")
+#source("w_matrix.R")
 bootstrap.matrix.sample<-function (data){
 
   n_rows = nrow(data)
@@ -18,7 +18,6 @@ bootstrap.statistic<-function (data,n_samples = 50,innerm,outerm){
     model<-advance.analytics.pls(data[bootstrap.matrix.sample(data),],innerm,outerm,tolerance = 1e-7, full=FALSE)
     outer_loading<- create.w.matrix(outerm)*model$cross_loadings
     val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
-    print(length(val))
     sample_matrix[i,]<-val
   }
 
@@ -33,8 +32,10 @@ bootstrap.statistic<-function (data,n_samples = 50,innerm,outerm){
 }
 #t statistitc
 bootstrap.tstat <- function(result,model,outerm,n_samples){
+  results <- list(t = NULL, p= NULL)
   outer_loading<- create.w.matrix(outerm)*model$cross_loadings
   val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
   t<- ((result$mean-val)*sqrt(n_samples))/(result$sd)
+  p<- 2*pt((t), df=n_samples-1)
   return(t)
 }
