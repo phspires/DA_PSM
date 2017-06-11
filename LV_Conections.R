@@ -7,7 +7,7 @@ create.conection.matrix=function (innermodel,outermodel){
   
   if (ncol(innermodel)!=2){ stop("The inner model must be a file with to colums")}
   order=c()
-  attach(innermodel)
+  #attach(innermodel)
   
   conection = matrix(0,nrow(unique(innermodel[,2]))+1,nrow(unique(innermodel[,2]))+1)
   
