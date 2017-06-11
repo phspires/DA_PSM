@@ -3,7 +3,7 @@ advance.analytics.pls =  function (data,
                     outermodel,
                     wscheme="Factor",
                     tolerance,
-                    mode="A",max_iter=1) {
+                    mode="A",max_iter=100) {
   result <- list(
     coefficients = NULL,
     path_coefficients = NULL,
