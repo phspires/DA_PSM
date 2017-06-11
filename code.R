@@ -4,7 +4,7 @@
 
 library(readr)
 library(readxl)
-source("pathcoef.r")
+source("path_coef.r")
 source("LV_Conections.R")
 source("weights_schemas.R")
 source("input_means.r")
