@@ -1,4 +1,4 @@
-  advance.analytics.pls =  function (data,
+advance.analytics.pls =  function (data,
                       innermodel,
                       outermodel,
                       wscheme="Factor",
@@ -157,14 +157,14 @@
       
       Communality <- get.communality(data,scale(m.aux),outermodel)
       o.load<- outer.loadings(c.load,outermodel)
-      
+      total.e<- total_effects(p.Coef)
       Redundancy.indexes <- get.redundancy.indexes(data,Communality,scale(m.aux),outermodel,innermodel)
       
       #result$coefficients <- "atribuir coeficientes"
       result$path_coefficients <- p.Coef
       result$outer_loadings <- o.load #<- o.load
       result$cross_loadings <- c.load
-      result$total_effects <- NULL
+      result$total_effects <- total.e
       result$inner_weights <- inner.w
       #result$outer_weights <- NULL
       result$tolerance <- stop.criteria

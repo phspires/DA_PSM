@@ -4,7 +4,6 @@
 
 library(readr)
 library(readxl)
-library(boot)
 source("pathcoef.r")
 source("LV_Conections.R")
 source("weights_schemas.R")
@@ -25,7 +24,6 @@ source("z_matrix.r")
 source("y_matrix.r")
 source("auxiliary_functions.r")
 source("PLS.r")
-source("outer_loading.r")
 #source("update.weigthsB.R")
 setwd("C:/Users/Asus/Documents/DA_PSM_NEW")
 #setwd("C:/Users/pspires/Documents/DA_PSM")
@@ -33,7 +31,7 @@ inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
 profdata <- read_excel("C:/Users/Asus/Desktop/profdata.xlsx")
 
-bank <- read_csv("bank.csv")
+bank <- read.csv("bank.csv")
 
 bank = bank[, 2:length(bank)]
 
