@@ -1,9 +1,11 @@
+##inner model - markov matrix (binary)
+##outer model - weights matrix
 
-## André Bruno Pedro
-## The A-Team 
-
+#FIRST FUNCTION BUILD A MODEL
+#ARGUMENTS (DATASET, INNER_MODEL,OUTER_MODEL)
 library(readr)
 library(readxl)
+library(matpow)
 source("path_coef.r")
 source("LV_Conections.R")
 source("weights_schemas.R")
@@ -24,30 +26,27 @@ source("z_matrix.r")
 source("y_matrix.r")
 source("auxiliary_functions.r")
 source("PLS.r")
-#source("update.weigthsB.R")
-setwd("C:/Users/Asus/Documents/DA_PSM_NEW")
-#setwd("C:/Users/pspires/Documents/DA_PSM")
+source("Boot.R")
+source("outer_loadings.R")
+source("coefficients.R")
+##setwd("C:/Users/Asus/Documents/DA_PSM_NEW")
+setwd("C:/Users/pspires/Documents/DA_PSM")
 inner.m <- read_excel("models.xlsx", sheet = "INNERMODEL")
 outer.m <- read_excel("models.xlsx", sheet = "OUTERMODEL")
-profdata <- read_excel("C:/Users/Asus/Desktop/profdata.xlsx")
 
 bank <- read.csv("bank.csv")
-
 bank = bank[, 2:length(bank)]
 
+### run model ####
+model=advance.analytics.pls(bank,inner.m,outer.m,"Factor",tolerance=0.00001, full=TRUE)
 
+### do bootrapping ###
+boot <- bootstrap.statistic(bank, n_samples = 20, inner.m, outer.m, tolerance=0.00001)
 
-aapls <- function(bank,i) {
-  
-  model=advance.analytics.pls(bank[i,],inner.m,outer.m,,0.1)
-  return (model$outer_weights)
-}
+### calculate statistics(t and p values) ###
+tval <- bootstrap.tstat(boot,model)
 
-#boot(bank, aapls, R = 500, stype = "i")
+### complete model$path ###
+model$path <- cbind(model$path, boot$mean, boot$sd, tval$t, tval$p)
 
-
-
-model=advance.analytics.pls(profdata,inner.m,outer.m,"Factor",0.0000001,"A")
-
-
-
+#######

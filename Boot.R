@@ -8,14 +8,14 @@ bootstrap.matrix.sample<-function (data){
   return (ind)
 }
 
-bootstrap.statistic<-function (data,n_samples = 50,innerm,outerm,tol){
-  print(tolerance)
+bootstrap.statistic<-function (data, n_samples = 50, innerm, outerm, mode="A",tolerance){
+
   sample_matrix <- matrix(NA,n_samples,nrow(innerm)+nrow(outerm))
-  results <- list(mean = NULL, sd= NULL)
-  class(results) <-"bootstrap.matrix.statistic"
+  results <- list(mean = NULL, sd= NULL,nsamples=NULL)
+  #class(results) <-"bootstrap.matrix.statistic"
   # Compute statistics and mean it to get statistic's value
   for (i in 1:n_samples) {
-    model<-advance.analytics.pls(data[bootstrap.matrix.sample(data),],innerm,outerm,tol, full=FALSE)
+    model<-advance.analytics.pls(data[bootstrap.matrix.sample(data),],innerm,outerm,mode=mode,tolerance=tolerance, full=FALSE)
     outer_loading<- create.w.matrix(outerm)*model$cross_loadings
     val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
     sample_matrix[i,]<-val
@@ -26,18 +26,22 @@ bootstrap.statistic<-function (data,n_samples = 50,innerm,outerm,tol){
   sd<- apply(sample_matrix, 2, sd)
   results$mean<-mean
   results$sd<-sd
-
+  results$nsamples<-n_samples
   #compute tvalue
   return (results)
 }
 
 #t statistitc
-bootstrap.tstat <- function(result,model,outerm,n_samples){
+bootstrap.tstat <- function(result,model){
   tstats <- list(t = NULL, p= NULL)
-  outer_loading<- create.w.matrix(outerm)*model$cross_loadings
+
+  outer_loading<- create.w.matrix(model$outermodel)*model$cross_loadings
+
   val<-c(outer_loading[outer_loading!=0],model$path_coefficients[model$path_coefficients!=0])
-  t<- ((result$mean-val)*sqrt(n_samples))/(result$sd)
-  p<- 2*pt(t, df=n_samples-1)
+
+  t<- ((result$mean-val)*sqrt(result$nsamples))/(result$sd)
+
+  p<- 2*pt(t, df=result$nsamples-1)
 
   tstats$t <- t
   tstats$p <- p

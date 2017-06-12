@@ -13,23 +13,9 @@ advance.analytics.pls =  function (data,
       total_effects = NULL,
       inner_weights = NULL,
       outer_weights = NULL,
-      ##stopcriteria = NULL, replace by tolerance
-      #blocks = NULL,
-      #factor_scores = NULL,
-      #data = NULL,
-      #scaled = scaled,
-      #model = model,
       weighting_scheme = NULL,
-      #weights_evolution = NULL,
-      #sum1 = sum1,
-      #pairwise = pairwise,
-      #method = method,
       iterations = NULL,
-      #convCrit = convCrit,
-      #verbose = verbose,
       tolerance = NULL,
-      #N = NULL,
-      #incomplete = NULL
       innermodel = create.conection.matrix(innermodel,outermodel),
       outermodel = outer.m,
       Y = NULL,
@@ -66,6 +52,7 @@ advance.analytics.pls =  function (data,
 
       #step 1 -- initialize weights(w) to 1
       outer.w = create.w.matrix(outermodel)
+      outer1 <- outer.w
 
       ### progression bar
 
@@ -147,6 +134,8 @@ advance.analytics.pls =  function (data,
 
       o.load<- outer.loadings(c.load,outermodel)
 
+      path <- coefficients(p.Coef,innermodel,o.load,outer1,mode)
+
       if(full) {
 
         #r.square
@@ -185,7 +174,8 @@ advance.analytics.pls =  function (data,
       result$z <- scale(m.aux)
       result$weighting_scheme <- wscheme
       result$data <- data
-      result$outm <- outermodel
+      result$ow <- outer1
+      result$path <- path
 
       message("Weight_Schema: ", wscheme)
       message("tol: ", tolerance)
