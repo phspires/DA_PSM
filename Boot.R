@@ -1,5 +1,4 @@
-source("code.R")
-source("w_matrix.R")
+#Get bootstrap samples
 bootstrap.matrix.sample<-function (data){
 
   n_rows = nrow(data)
@@ -7,7 +6,7 @@ bootstrap.matrix.sample<-function (data){
 
   return (ind)
 }
-
+#Get boostrap samples mean and standard deviation
 bootsrap.statistic<-function (data,n_samples = 10,innerm,outerm){
   
   sample_matrix <- matrix(NA,n_samples,nrow(innerm)+nrow(outerm))
@@ -28,7 +27,7 @@ bootsrap.statistic<-function (data,n_samples = 10,innerm,outerm){
   results$mean<-mean
   results$sd<-sd
   
-  #compute tvalue
+ 
   return (results)
   
 }
